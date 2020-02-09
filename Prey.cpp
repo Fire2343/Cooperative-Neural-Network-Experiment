@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Prey::Prey(vector<int> bodyCoords, vector<vector<double>> weights) {
+Prey::Prey(vector<int> bodyCoords, vector<vector<vector<double>>> weights) {
 	this->size = bodyCoords.size();
 	this->bodyCoords = bodyCoords;
 	this->weights = weights;
@@ -26,7 +26,7 @@ vector<double> Prey::neuralNet(vector<double> inputs) {
 	for (int l = 0; l < weights.size(); l++) {
 		nextLayerInputs.clear();
 		for (int n = 0; n < weights[l].size(); n++) {
-			nextLayerInputs.push_back(neuronActivationFunction(previousLayerInputs, weights[l]));
+			nextLayerInputs.push_back(neuronActivationFunction(previousLayerInputs, weights[l][n]));
 		}
 		previousLayerInputs = nextLayerInputs;
 	}
