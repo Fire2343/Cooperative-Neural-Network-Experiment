@@ -2,8 +2,9 @@
 
 using namespace std;
 
-Prey::Prey(int size) {
-	this->size = size;
+Prey::Prey(vector<int> bodyCoords) {
+	this->size = bodyCoords.size();
+	this->bodyCoords = bodyCoords;
 }
 
 double Prey::sigmoidFunction(double z) {
