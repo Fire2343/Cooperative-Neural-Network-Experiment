@@ -49,11 +49,10 @@ void runWorld(vector<double> *world) {
     vector<int> preyBodyCoords;
     preyBodyCoords.push_back(18);
     preyBodyCoords.push_back(19);
-    (*world)[18, 19] = 1.0;
     vector<vector<vector<double>>> weights;
     uniform_int_distribution<int> layers(1, 4); //the input layer is not a layer, the output layer is.
     int nnlayers = layers(generator);
-    int prevlayernNeurons = WSL * WSL;
+    int prevlayernNeurons = WSL * WSL + 2;
     for (int l = 0; l < nnlayers; l++) {
         vector<vector<double>> layerWeights;
         int nNeurons;
@@ -76,18 +75,33 @@ void runWorld(vector<double> *world) {
         prevlayernNeurons = nNeurons;
     }
     Prey prey1(preyBodyCoords, weights);
+    (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
     preyBodyCoords[1] += 50;
-    (*world)[68, 69] = 1.0;
     Prey prey2(preyBodyCoords, weights);
+    (*world)[68, 69] = 1.0;
     preys.push_back(prey1);
     preys.push_back(prey2);
-    vector<double> output = prey1.neuralNet(*world);
-    cout << output.size() << endl;
-    cout << output[0] << endl;
-    cout << output[1] << endl;
-    cout << output[2] << endl;
-    cout << output[3] << endl;
+    vector<double> input1 = (*world);
+    input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
+    vector<double> input2 = (*world);
+    input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
+    vector<double> output1 = prey1.neuralNet(input1);
+    vector<double> output2 = prey1.neuralNet(input2);
+    cout << output1.size() << endl;
+    cout << output1[0] << endl;
+    cout << output1[1] << endl;
+    cout << output1[2] << endl;
+    cout << output1[3] << endl;
+    cout << output2.size() << endl;
+    cout << output2[0] << endl;
+    cout << output2[1] << endl;
+    cout << output2[2] << endl;
+    cout << output2[3] << endl;
+    ofstream geneticMemory;
+    geneticMemory.open("neuralNetValues.txt", fstream::app);
+    geneticMemory << weights.size() << endl;
+    geneticMemory.close();
 }
 
 int main() {
