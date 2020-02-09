@@ -13,7 +13,7 @@ int Predator::chooseMove(vector<Prey> preys) {
 	int prey2Coords = preys[1].bodyCoords[0];
 	int distanceTo1 = abs(thisCoords - prey1Coords);
 	int distanceTo2 = abs(thisCoords - prey2Coords);
-	if (distanceTo1 <= distanceTo2) {
+	if (distanceTo1 < distanceTo2) {
 		if (int(prey1Coords / 10) > int(thisCoords / 10)) {
 			return 10;
 		}
@@ -21,6 +21,20 @@ int Predator::chooseMove(vector<Prey> preys) {
 			return -10;
 		}
 		if (prey1Coords > thisCoords) {
+			return 1;
+		}
+		if (prey1Coords < thisCoords) {
+			return -1;
+		}
+	}
+	else {
+		if (int(prey2Coords / 10) > int(thisCoords / 10)) {
+			return 10;
+		}
+		if (int(prey2Coords / 10) < int(thisCoords / 10)) {
+			return -10;
+		}
+		if (prey2Coords > thisCoords) {
 			return 1;
 		}
 		if (prey2Coords < thisCoords) {

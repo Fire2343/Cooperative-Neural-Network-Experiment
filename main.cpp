@@ -34,7 +34,7 @@ void displayBestOfGen(int generation) {
     }
 }
 
-void runWorld(vector<int> *world, RenderWindow *window) {
+void runWorld(vector<int> *world) {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(WorldSeed);
     vector<int> predatorBodyCoords;
@@ -43,13 +43,37 @@ void runWorld(vector<int> *world, RenderWindow *window) {
     predatorBodyCoords.push_back(44);
     predatorBodyCoords.push_back(45);
     Predator predator(predatorBodyCoords);
+    vector<Prey> preys;
     vector<int> preyBodyCoords;
     preyBodyCoords.push_back(18);
     preyBodyCoords.push_back(19);
-    Prey prey1(preyBodyCoords);
+    vector<vector<double>> weights;
+    uniform_int_distribution<int> layers(1, 4); //the input layer is not a layer, the output layer is.
+    int nnlayers = layers(generator);
+    for (int l = 0; l < nnlayers; l++) {
+        vector<double> layerWeights;
+        int nNeurons;
+        if (l == nnlayers - 1) {
+            nNeurons = 4;
+        }
+        else {
+            uniform_int_distribution<int> layerSize(1, 300);
+            nNeurons = layerSize(generator);
+        }
+        for (int n = 0; n < nNeurons; n++) {
+            uniform_real_distribution<double> nwdistribution(0.0, 1.0);
+            layerWeights.push_back(nwdistribution(generator));
+        }
+        weights.push_back(layerWeights);
+        cout << nNeurons << endl;
+    }
+    cout << weights.size() << endl;
+    Prey prey1(preyBodyCoords, weights);
     preyBodyCoords[0] += 50;
     preyBodyCoords[1] += 50;
-    Prey prey2(preyBodyCoords);
+    Prey prey2(preyBodyCoords, weights);
+    preys.push_back(prey1);
+    preys.push_back(prey2);
     
 }
 
@@ -59,6 +83,7 @@ int main() {
     for(int w = 0; w < WORLDS; w++) {
         vector<int> world(WSL * WSL, 0); //each world is represented by a single vector despite technically being a m * n matrix. The first n elements represent all the columns of the first row, and so on and so on.
         worlds.push_back(world);
-    }	
+    }
+    runWorld(&worlds[0]);
 	return 0;
 }

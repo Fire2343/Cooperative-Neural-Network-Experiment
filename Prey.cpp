@@ -2,9 +2,10 @@
 
 using namespace std;
 
-Prey::Prey(vector<int> bodyCoords) {
+Prey::Prey(vector<int> bodyCoords, vector<vector<double>> weights) {
 	this->size = bodyCoords.size();
 	this->bodyCoords = bodyCoords;
+	this->weights = weights;
 }
 
 double Prey::sigmoidFunction(double z) {
@@ -19,7 +20,7 @@ double Prey::neuronActivationFunction(vector<double> inputs, vector<double> weig
 	return sigmoidFunction(dotProduct);
 }
 
-double Prey::neuralNet(vector<double> inputs, vector<vector<double>> weights) {
+vector<double> Prey::neuralNet(vector<double> inputs) {
 	vector<double> nextLayerInputs;
 	vector<double> previousLayerInputs = inputs;
 	for (int l = 0; l < weights.size(); l++) {
@@ -29,5 +30,5 @@ double Prey::neuralNet(vector<double> inputs, vector<vector<double>> weights) {
 		}
 		previousLayerInputs = nextLayerInputs;
 	}
-	return nextLayerInputs[0];
+	return nextLayerInputs;
 }
