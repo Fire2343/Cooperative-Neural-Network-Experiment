@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <thread>
 #include <fstream>
+#include <string>
+#include <sstream> 
 #include <iostream>
 #include <random>
 #include <chrono>
@@ -34,21 +36,9 @@ void displayBestOfGen(int generation) {
     }
 }
 
-void runWorld(vector<double> *world) {
+void generateNeuralNet() {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(WorldSeed);
-    vector<int> predatorBodyCoords;
-    predatorBodyCoords.push_back(34);
-    predatorBodyCoords.push_back(35);
-    predatorBodyCoords.push_back(44);
-    predatorBodyCoords.push_back(45);
-    (*world)[34, 35] = 1.0;
-    (*world)[44, 45] = 1.0;
-    Predator predator(predatorBodyCoords);
-    vector<Prey> preys;
-    vector<int> preyBodyCoords;
-    preyBodyCoords.push_back(18);
-    preyBodyCoords.push_back(19);
     vector<vector<vector<double>>> weights;
     uniform_int_distribution<int> layers(1, 4); //the input layer is not a layer, the output layer is.
     int nnlayers = layers(generator);
@@ -74,6 +64,53 @@ void runWorld(vector<double> *world) {
         weights.push_back(layerWeights);
         prevlayernNeurons = nNeurons;
     }
+}
+
+void runWorld(vector<double> *world) {
+    vector<int> predatorBodyCoords;
+    predatorBodyCoords.push_back(34);
+    predatorBodyCoords.push_back(35);
+    predatorBodyCoords.push_back(44);
+    predatorBodyCoords.push_back(45);
+    (*world)[34, 35] = 1.0;
+    (*world)[44, 45] = 1.0;
+    Predator predator(predatorBodyCoords);
+    vector<Prey> preys;
+    vector<int> preyBodyCoords;
+    preyBodyCoords.push_back(18);
+    preyBodyCoords.push_back(19);
+    vector<vector<vector<double>>> weights;
+    ifstream geneticMemory;
+    string data;
+    geneticMemory.open("neuralNetValues.txt");
+    while (!geneticMemory.eof()) {
+        vector<double> neuronWeights;
+        vector<vector<double>> layer;
+        getline(geneticMemory, data);
+        char c;
+        for (int i = 0; i < data.size(); i++) {
+            c = data[i];
+            if (c != ("|")[0] && c != ("\n")[0] && c != ("-")[0]) {
+                stringstream converter(data.substr(i, 4));
+                double converted;
+                converter >> converted;
+                //cout << converted << endl;
+                i += 3;
+                neuronWeights.push_back(converted);
+            }
+            else {
+                if (c == ("|")[0]) {
+                    if (neuronWeights.size() > 0) {
+                        layer.push_back(neuronWeights);
+                        weights.push_back(layer);
+                    }
+                    layer.clear();
+                    neuronWeights.clear();
+                }
+            }
+        }
+    }
+    //TODO: HÁ BUG NESTA PARTE, VETOR FORA DE RANGE, VER FUNÇÕES NAS PREYS.
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
@@ -88,20 +125,9 @@ void runWorld(vector<double> *world) {
     input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
     vector<double> output1 = prey1.neuralNet(input1);
     vector<double> output2 = prey1.neuralNet(input2);
-    cout << output1.size() << endl;
-    cout << output1[0] << endl;
-    cout << output1[1] << endl;
-    cout << output1[2] << endl;
-    cout << output1[3] << endl;
-    cout << output2.size() << endl;
-    cout << output2[0] << endl;
-    cout << output2[1] << endl;
-    cout << output2[2] << endl;
-    cout << output2[3] << endl;
-    ofstream geneticMemory;
-    geneticMemory.open("neuralNetValues.txt", fstream::app);
-    geneticMemory << weights.size() << endl;
-    geneticMemory.close();
+    ofstream geneticData;
+    geneticData.open("neuralNetValues.txt", fstream::app);
+    geneticData.close();
 }
 
 int main() {
