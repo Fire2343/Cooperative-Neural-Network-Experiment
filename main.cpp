@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>
+//#include <SFML/Graphics.hpp>
 #include <thread>
 #include <fstream>
 #include <string>
@@ -16,11 +16,11 @@ const int WSL = 10; //size of both world dimensions, in units-area.
 const int WORLDS = 10; //each thread runs a world
 
 
-using namespace sf;
+//using namespace sf;
 using namespace std;
 
 void displayBestOfGen(int generation) {
-    RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
+    /* RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
 
     while (window.isOpen())
     {
@@ -33,37 +33,24 @@ void displayBestOfGen(int generation) {
 
         window.clear(Color(255, 50, 150, 255)); //Clear tem de ser chamado após cada update ao renderer, sn está a desenhar por cima do anterior em vez de o substituir. 
         window.display();
-    }
+    } */
 }
 
-void generateNeuralNet() {
+void mutateNeuralNet() {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(WorldSeed);
-    vector<vector<vector<double>>> weights;
-    uniform_int_distribution<int> layers(1, 4); //the input layer is not a layer, the output layer is.
-    int nnlayers = layers(generator);
-    int prevlayernNeurons = WSL * WSL + 2;
-    for (int l = 0; l < nnlayers; l++) {
-        vector<vector<double>> layerWeights;
-        int nNeurons;
-        if (l == nnlayers - 1) {
-            nNeurons = 4;
+}
+void generateInitialGeneticMemory(vector<double> *world) {
+    ofstream geneticMemory("neuralNetValues.txt", fstream::app);
+    geneticMemory << "|";
+    for (int n = 0; n < 4; n++) {
+        for (int i = 0; i < (*world).size(); i++) {
+            geneticMemory << "0.00-";
         }
-        else {
-            uniform_int_distribution<int> layerSize(1, 300);
-            nNeurons = layerSize(generator);
-        }
-        for (int n = 0; n < nNeurons; n++) {
-            vector<double> neuronWeights;
-            for (int w = 0; w < prevlayernNeurons; w++) {
-                uniform_real_distribution<double> nwdistribution(0.0, 1.0);
-                neuronWeights.push_back(nwdistribution(generator));
-            }
-            layerWeights.push_back(neuronWeights);
-        }
-        weights.push_back(layerWeights);
-        prevlayernNeurons = nNeurons;
+        geneticMemory << "||";
     }
+    geneticMemory << endl;
+    geneticMemory.close()
 }
 
 void runWorld(vector<double> *world) {
@@ -114,6 +101,7 @@ void runWorld(vector<double> *world) {
             }
         }
     }
+    geneticMemory.close();
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
@@ -140,6 +128,7 @@ int main() {
         vector<double> world(WSL * WSL, 0.0); //each world is represented by a single vector despite technically being a m * n matrix. The first n elements represent all the columns of the first row, and so on and so on.
         worlds.push_back(world);
     }
-    runWorld(&worlds[0]);
+    generateInitialGeneticMemory(&worlds[0]);
+    //runWorld(&worlds[0]);
 	return 0;
 }
