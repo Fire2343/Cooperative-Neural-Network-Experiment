@@ -85,7 +85,7 @@ void runWorld(vector<double> *world) {
     geneticMemory.open("neuralNetValues.txt");
     while (!geneticMemory.eof()) {
         vector<double> neuronWeights;
-        vector<vector<double>> layer;
+        vector<vector<double>> layerWeights;
         getline(geneticMemory, data);
         char c;
         for (int i = 0; i < data.size(); i++) {
@@ -99,18 +99,21 @@ void runWorld(vector<double> *world) {
                 neuronWeights.push_back(converted);
             }
             else {
-                if (c == ("|")[0]) {
-                    if (neuronWeights.size() > 0) {
-                        layer.push_back(neuronWeights);
-                        weights.push_back(layer);
-                    }
-                    layer.clear();
-                    neuronWeights.clear();
-                }
+		         if(c == ("|")[0]) {
+                     if (data[i - 1] == c) {
+                         weights.push_back(layerWeights);
+                         layerWeights.clear();
+                     }
+                     else {
+                         if (neuronWeights.size() > 0) {
+                             layerWeights.push_back(neuronWeights);
+                             neuronWeights.clear();
+                         }
+                     }
+                 }
             }
         }
     }
-    //TODO: HÁ BUG NESTA PARTE, VETOR FORA DE RANGE, VER FUNÇÕES NAS PREYS.
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
