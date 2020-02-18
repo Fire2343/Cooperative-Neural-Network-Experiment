@@ -36,9 +36,24 @@ void displayBestOfGen(int generation) {
     } */
 }
 
-void mutateNeuralNet() {
+void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
-    default_random_engine generator(WorldSeed);
+    mt19937_64 generator(WorldSeed);
+    uniform_int_distribution<int> distribution(0, 100);
+    uniform_real_distribution<double> vdistribution(-0.10, 0.10);
+    for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
+        for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
+            if (distribution(generator) == 1 && l < (*weights).size() - 1) { //opurtunidade de mutação para criação de novos neurónios
+                vector<double> newNeuron = (*weights)[l][n];
+                (*weights)[l].push_back(newNeuron);
+            }
+            for (int w = 0; w < (*weights)[l][n].size(); w++) { // percorrer pesos do neuronio
+                if (distribution(generator) == 1) { // opurtunidade de mutação para alterar os pesos nos neurónio 
+                    (*weights)[l][n][w] += vdistribution(generator);
+                }
+            }
+        }
+    }
 }
 void generateInitialGeneticMemory(vector<double> *world) {
     ofstream geneticMemory("neuralNetValues.txt", fstream::app);
@@ -100,12 +115,13 @@ void runWorld(vector<double> *world) {
         }
     }
     geneticMemory.close();
+    mutateNeuralNet(&weights);
     cout << weights.size() << endl;
     cout << weights[0].size() << endl;
     cout << weights[0][0].size() << endl;
-    for (int i = 0; i < weights[0][0].size(); i++) {
+    /*for (int i = 0; i < weights[0][0].size(); i++) {
         cout << weights[0][0][i] << endl;
-    }
+    }*/
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
