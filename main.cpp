@@ -44,13 +44,13 @@ void generateInitialGeneticMemory(vector<double> *world) {
     ofstream geneticMemory("neuralNetValues.txt", fstream::app);
     geneticMemory << "|";
     for (int n = 0; n < 4; n++) {
-        for (int i = 0; i < (*world).size(); i++) {
+        for (int i = 0; i < (*world).size() + 2; i++) {
             geneticMemory << "0.00-";
         }
-        geneticMemory << "||";
+        geneticMemory << "|";
     }
-    geneticMemory << endl;
-    geneticMemory.close()
+    geneticMemory << "|" << endl;
+    geneticMemory.close();
 }
 
 void runWorld(vector<double> *world) {
@@ -87,21 +87,25 @@ void runWorld(vector<double> *world) {
             }
             else {
 		         if(c == ("|")[0]) {
-                     if (data[i - 1] == c) {
-                         weights.push_back(layerWeights);
-                         layerWeights.clear();
-                     }
-                     else {
-                         if (neuronWeights.size() > 0) {
-                             layerWeights.push_back(neuronWeights);
-                             neuronWeights.clear();
-                         }
-                     }
+                    if (neuronWeights.size() > 0) {
+                        layerWeights.push_back(neuronWeights);
+                        neuronWeights.clear();
+                    }
+                    if (data[i + 1] == c) {
+                        weights.push_back(layerWeights);
+                        layerWeights.clear();
+                    }
                  }
             }
         }
     }
     geneticMemory.close();
+    cout << weights.size() << endl;
+    cout << weights[0].size() << endl;
+    cout << weights[0][0].size() << endl;
+    for (int i = 0; i < weights[0][0].size(); i++) {
+        cout << weights[0][0][i] << endl;
+    }
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
@@ -116,6 +120,11 @@ void runWorld(vector<double> *world) {
     input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
     vector<double> output1 = prey1.neuralNet(input1);
     vector<double> output2 = prey1.neuralNet(input2);
+    cout << output1.size() << endl;
+    cout << output1[0] << endl;
+    cout << output1[1] << endl;
+    cout << output1[2] << endl;
+    cout << output1[3] << endl;
     ofstream geneticData;
     geneticData.open("neuralNetValues.txt", fstream::app);
     geneticData.close();
@@ -128,7 +137,7 @@ int main() {
         vector<double> world(WSL * WSL, 0.0); //each world is represented by a single vector despite technically being a m * n matrix. The first n elements represent all the columns of the first row, and so on and so on.
         worlds.push_back(world);
     }
-    generateInitialGeneticMemory(&worlds[0]);
-    //runWorld(&worlds[0]);
+    //generateInitialGeneticMemory(&worlds[0]);
+    runWorld(&worlds[0]);
 	return 0;
 }
