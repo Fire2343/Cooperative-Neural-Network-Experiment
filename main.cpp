@@ -41,6 +41,7 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     mt19937_64 generator(WorldSeed);
     uniform_int_distribution<int> distribution(0, 100);
     uniform_real_distribution<double> vdistribution(-0.10, 0.10);
+    uniform_real_distribution<double> nlvdistribution(-1.00, 1.00);
     for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
         for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
             if (distribution(generator) == 1 && l < (*weights).size() - 1) { //opurtunidade de mutação para criação de novos neurónios
@@ -52,6 +53,17 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
                     (*weights)[l][n][w] += vdistribution(generator);
                 }
             }
+        }
+        if (distribution(generator) == 1 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
+            vector<vector<double>> newLayer;
+            for (int n = 0; n < (*weights)[l].size(); n++) {
+                vector<double> newLayerWeights;
+                for (int w = 0; w < (*weights)[l][n].size(); w++) {
+                    newLayerWeights.push_back(nlvdistribution(generator));
+                }
+                newLayer.push_back(newLayerWeights);
+            }
+            (*weights).push_back(newLayer);
         }
     }
 }
@@ -116,12 +128,10 @@ void runWorld(vector<double> *world) {
     }
     geneticMemory.close();
     mutateNeuralNet(&weights);
+    int size = weights.size();
     cout << weights.size() << endl;
     cout << weights[0].size() << endl;
     cout << weights[0][0].size() << endl;
-    /*for (int i = 0; i < weights[0][0].size(); i++) {
-        cout << weights[0][0][i] << endl;
-    }*/
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
@@ -136,11 +146,11 @@ void runWorld(vector<double> *world) {
     input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
     vector<double> output1 = prey1.neuralNet(input1);
     vector<double> output2 = prey1.neuralNet(input2);
-    cout << output1.size() << endl;
-    cout << output1[0] << endl;
-    cout << output1[1] << endl;
-    cout << output1[2] << endl;
-    cout << output1[3] << endl;
+    //cout << output1.size() << endl;
+    //cout << output1[0] << endl;
+    //cout << output1[1] << endl;
+    //cout << output1[2] << endl;
+    //cout << output1[3] << endl;
     ofstream geneticData;
     geneticData.open("neuralNetValues.txt", fstream::app);
     geneticData.close();
