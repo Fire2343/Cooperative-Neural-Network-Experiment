@@ -80,6 +80,23 @@ void generateInitialGeneticMemory(vector<double> *world) {
     geneticMemory.close();
 }
 
+vector<int> convertToXY(int coord) {
+    vector<int> xycoords;
+    int x;
+    int y;
+    if (coord / 10 > 0) {
+        x = ((double(coord) / 10 - coord / 10) * 10);
+        y = int(coord / 10);
+    }
+    else {
+        x = coord;
+        y = 0;
+    }
+    xycoords.push_back(x);
+    xycoords.push_back(y);
+    return xycoords;
+}
+
 bool checkAdjacency(vector<int> *targetBodyParts, int seekerBodyPart) {
     for (int i = 0; i < (*targetBodyParts).size(); i++) {
         int d = abs((*targetBodyParts)[i] - seekerBodyPart);

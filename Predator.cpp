@@ -40,6 +40,7 @@ int Predator::chooseMove(vector<Prey> preys) {
 	}
 	if (ycoords[1] - ycoords[0] != 0) {
 		movementDirectionY[0] = (ycoords[1] - ycoords[0]) / abs(ycoords[1] - ycoords[0]);
+	}
 	if (ycoords[2] - ycoords[0] != 0) {
 		movementDirectionY[1] = (ycoords[2] - ycoords[0]) / abs(ycoords[2] - ycoords[0]);
 	}
