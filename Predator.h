@@ -1,5 +1,6 @@
 #include <vector>
 #include "Prey.h"
+#include <cmath>
 
 #pragma once
 class Predator

@@ -140,30 +140,69 @@ void runWorld(vector<double> *world) {
     (*world)[68, 69] = 1.0;
     preys.push_back(prey1);
     preys.push_back(prey2);
-    vector<double> input1 = (*world);
-    input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
-    vector<double> input2 = (*world);
-    input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
-    vector<double> output1 = prey1.neuralNet(input1);
-    vector<double> output2 = prey1.neuralNet(input2);
-    //cout << output1.size() << endl;
-    //cout << output1[0] << endl;
-    //cout << output1[1] << endl;
-    //cout << output1[2] << endl;
-    //cout << output1[3] << endl;
-    ofstream geneticData;
-    geneticData.open("neuralNetValues.txt", fstream::app);
-    geneticData.close();
+    for (int t = 0; t < 20; t++) {
+        vector<double> input1 = (*world);
+        input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
+        vector<double> input2 = (*world);
+        input2.insert(input2.end(), prey2.bodyCoords.begin(), prey2.bodyCoords.end());
+        vector<vector<double>> outputs;
+        outputs.push_back(prey1.neuralNet(input1));
+        outputs.push_back(prey2.neuralNet(input2));
+        for (int osi = 0; osi < outputs.size(); osi++) {
+            int toMove = 0;
+            for (int oi = 0; oi < outputs[osi].size(); oi++) {
+                if (outputs[osi][oi] > 0.50) {
+                    switch (oi)
+                    {
+                        case 0:
+                            toMove += -1;
+                            break;
+                        case 1:
+                            toMove += 1;
+                            break;
+                        case 2:
+                            toMove += -10;
+                            break;
+                        case 3:
+                            toMove += 10;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (osi == 0) {
+                for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {
+                    prey1.bodyCoords[bi] += toMove;
+                }
+            }
+            else {
+                for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
+                    prey2.bodyCoords[bi] += toMove;
+                }
+            }
+        }
+        //Check to see if both preys are touching predator, so their roles may change.
+        int predatorMove = predator.chooseMove(preys);
+        for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
+            predator.bodyCoords[bi] += predatorMove;
+        }
+        //Check to see if the predator is touching a prey, so it may perish.
+    }
 }
 
 int main() {
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
+    vector<int> fitnessScores;
     for(int w = 0; w < WORLDS; w++) {
         vector<double> world(WSL * WSL, 0.0); //each world is represented by a single vector despite technically being a m * n matrix. The first n elements represent all the columns of the first row, and so on and so on.
         worlds.push_back(world);
     }
     //generateInitialGeneticMemory(&worlds[0]);
-    runWorld(&worlds[0]);
+    //runWorld(&worlds[0]);
+    ofstream geneticData;
+    geneticData.open("neuralNetHistoricalData.txt", fstream::app);
+    geneticData.close();
 	return 0;
 }
