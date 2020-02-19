@@ -80,7 +80,26 @@ void generateInitialGeneticMemory(vector<double> *world) {
     geneticMemory.close();
 }
 
-void runWorld(vector<double> *world) {
+bool checkAdjacency(vector<int> *targetBodyParts, int seekerBodyPart) {
+    for (int i = 0; i < (*targetBodyParts).size(); i++) {
+        int d = abs((*targetBodyParts)[i] - seekerBodyPart);
+        switch (d) 
+        {
+            case 11:
+                return true;
+            case 10:
+                return true;
+            case 9:
+                return true;
+            case 1:
+                return true;
+            default:
+                return false;
+        }
+    }
+}
+
+void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber, vector<vector<vector<vector<double>>>> *worldNeuralWeights) {
     vector<int> predatorBodyCoords;
     predatorBodyCoords.push_back(34);
     predatorBodyCoords.push_back(35);
@@ -140,6 +159,9 @@ void runWorld(vector<double> *world) {
     (*world)[68, 69] = 1.0;
     preys.push_back(prey1);
     preys.push_back(prey2);
+    bool flag1 = false;
+    bool flag2 = false;
+    bool touchingPrey = false;
     for (int t = 0; t < 20; t++) {
         vector<double> input1 = (*world);
         input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
@@ -172,37 +194,66 @@ void runWorld(vector<double> *world) {
                 }
             }
             if (osi == 0) {
-                for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {
+                for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {  //Check to see if both preys are touching predator, so their roles may change.                    
                     prey1.bodyCoords[bi] += toMove;
+                    if (!flag1) {
+                        flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
+                    }
                 }
             }
             else {
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
                     prey2.bodyCoords[bi] += toMove;
+                    if (!flag2) {
+                        flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
+                    }
                 }
             }
         }
-        //Check to see if both preys are touching predator, so their roles may change.
+        if (flag1 && flag2) {
+            (*fitnessValues)[worldNumber] += 1000 / t;
+            break;
+        }
         int predatorMove = predator.chooseMove(preys);
         for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
             predator.bodyCoords[bi] += predatorMove;
+            if (!touchingPrey) {
+                touchingPrey = checkAdjacency(&prey1.bodyCoords, predatorBodyCoords[bi]);
+            }
         }
-        //Check to see if the predator is touching a prey, so it may perish.
+        if (touchingPrey) {
+            (*fitnessValues)[worldNumber] -= 100 / t;
+            break;
+        }
     }
+    (*worldNeuralWeights)[worldNumber] = weights;
 }
 
 int main() {
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<int> fitnessScores;
+    vector<vector<vector<vector<double>>>> worldNeuralWeights(WORLDS);
     for(int w = 0; w < WORLDS; w++) {
         vector<double> world(WSL * WSL, 0.0); //each world is represented by a single vector despite technically being a m * n matrix. The first n elements represent all the columns of the first row, and so on and so on.
         worlds.push_back(world);
+        fitnessScores.push_back(0);
     }
     //generateInitialGeneticMemory(&worlds[0]);
     //runWorld(&worlds[0]);
+    int maxF = -10000;
+    int maxFi = 0;
+    for (int i = 0; i < fitnessScores.size(); i++) {
+        if (fitnessScores[i] > maxF) {
+            maxF = fitnessScores[i];
+            maxFi = i;
+        }
+    }
+    vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
     ofstream geneticData;
-    geneticData.open("neuralNetHistoricalData.txt", fstream::app);
+    geneticData.open("neuralNetValues.txt");
+    geneticData << "|";
+
     geneticData.close();
 	return 0;
 }
