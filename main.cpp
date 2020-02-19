@@ -251,9 +251,24 @@ int main() {
     }
     vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
     ofstream geneticData;
+    ofstream geneticHistory;
     geneticData.open("neuralNetValues.txt");
-    geneticData << "|";
-
+    geneticHistory.open("neuralNetHistoricalData.txt");
+    for (int l = 0; l < nextGenNet.size; l++) {
+        for (int n = 0; n < nextGenNet[l].size; n++) {
+            geneticData << "|";
+            geneticHistory << "|";
+            for (int w = 0; w < nextGenNet[l][n].size; w++) {
+                geneticData << nextGenNet[l][n][w] << "-";
+                geneticHistory << nextGenNet[l][n][w] << "-";
+            }
+        }
+        geneticData << "|";
+        geneticHistory << "|";
+    }
+    geneticData << endl;
+    geneticHistory << endl;
     geneticData.close();
+    geneticHistory.close();
 	return 0;
 }
