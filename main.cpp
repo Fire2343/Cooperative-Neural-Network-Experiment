@@ -19,6 +19,33 @@ const int WORLDS = 10; //each thread runs a world
 //using namespace sf;
 using namespace std;
 
+bool insideBounds(vector<int> coords) {
+    if (coords[0] < 0 || coords[0] > 9) {
+        return false;
+    }
+    if (coords[1] < 0 || coords[1] > 9) {
+        return false;
+    }
+    return true;
+}
+
+vector<int> convertToXY(int coord) {
+    vector<int> xycoords;
+    int x;
+    int y;
+    if (coord / 10 > 0) {
+        x = ((double(coord) / 10 - coord / 10) * 10);
+        y = int(coord / 10);
+    }
+    else {
+        x = coord;
+        y = 0;
+    }
+    xycoords.push_back(x);
+    xycoords.push_back(y);
+    return xycoords;
+}
+
 void displayBestOfGen(int generation) {
     /* RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
 
@@ -80,26 +107,12 @@ void generateInitialGeneticMemory(vector<double> *world) {
     geneticMemory.close();
 }
 
-vector<int> convertToXY(int coord) {
-    vector<int> xycoords;
-    int x;
-    int y;
-    if (coord / 10 > 0) {
-        x = ((double(coord) / 10 - coord / 10) * 10);
-        y = int(coord / 10);
-    }
-    else {
-        x = coord;
-        y = 0;
-    }
-    xycoords.push_back(x);
-    xycoords.push_back(y);
-    return xycoords;
-}
-
 bool checkAdjacency(vector<int> *targetBodyParts, int seekerBodyPart) {
     for (int i = 0; i < (*targetBodyParts).size(); i++) {
         int d = abs((*targetBodyParts)[i] - seekerBodyPart);
+        if (!insideBounds(convertToXY(d))) {
+            continue;
+        }
         switch (d) 
         {
             case 11:
@@ -212,7 +225,12 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             }
             if (osi == 0) {
                 for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {  //Check to see if both preys are touching predator, so their roles may change.                    
+                    if (!insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove))) {
+                        break;
+                    }
+                    (*world)[prey1.bodyCoords[bi]] = 0.0;
                     prey1.bodyCoords[bi] += toMove;
+                    (*world)[prey1.bodyCoords[bi]] = 1.0;
                     if (!flag1) {
                         flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
                     }
@@ -220,7 +238,12 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             }
             else {
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
+                    if (!insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove))) {
+                        break;
+                    }
+                    (*world)[prey2.bodyCoords[bi]] = 0.0;
                     prey2.bodyCoords[bi] += toMove;
+                    (*world)[prey2.bodyCoords[bi]] = 1.0;
                     if (!flag2) {
                         flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
                     }
@@ -233,9 +256,14 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
         }
         int predatorMove = predator.chooseMove(preys);
         for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
+            if (!insideBounds(convertToXY(predator.bodyCoords[bi] + predatorMove))) {
+                break;
+            }
+            (*world)[predator.bodyCoords[bi]] = 0.0;
             predator.bodyCoords[bi] += predatorMove;
+            (*world)[predator.bodyCoords[bi]] = 1.0;
             if (!touchingPrey) {
-                touchingPrey = checkAdjacency(&prey1.bodyCoords, predatorBodyCoords[bi]);
+                touchingPrey = checkAdjacency(&prey1.bodyCoords, predator.bodyCoords[bi]);
             }
         }
         if (touchingPrey) {
@@ -271,11 +299,11 @@ int main() {
     ofstream geneticHistory;
     geneticData.open("neuralNetValues.txt");
     geneticHistory.open("neuralNetHistoricalData.txt");
-    for (int l = 0; l < nextGenNet.size; l++) {
-        for (int n = 0; n < nextGenNet[l].size; n++) {
+    for (int l = 0; l < nextGenNet.size(); l++) {
+        for (int n = 0; n < nextGenNet[l].size(); n++) {
             geneticData << "|";
             geneticHistory << "|";
-            for (int w = 0; w < nextGenNet[l][n].size; w++) {
+            for (int w = 0; w < nextGenNet[l][n].size(); w++) {
                 geneticData << nextGenNet[l][n][w] << "-";
                 geneticHistory << nextGenNet[l][n][w] << "-";
             }
