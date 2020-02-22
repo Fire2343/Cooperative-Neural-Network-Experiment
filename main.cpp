@@ -1,4 +1,4 @@
-//#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include <thread>
 #include <fstream>
 #include <string>
@@ -16,7 +16,7 @@ const int WSL = 10; //size of both world dimensions, in units-area.
 const int WORLDS = 10; //each thread runs a world
 
 
-//using namespace sf;
+using namespace sf;
 using namespace std;
 
 bool insideBounds(vector<int> coords) {
@@ -46,8 +46,8 @@ vector<int> convertToXY(int coord) {
     return xycoords;
 }
 
-void displayBestOfGen(int generation) {
-    /* RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
+void displayBestOfGen() {
+    RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
 
     while (window.isOpen())
     {
@@ -60,7 +60,7 @@ void displayBestOfGen(int generation) {
 
         window.clear(Color(255, 50, 150, 255)); //Clear tem de ser chamado após cada update ao renderer, sn está a desenhar por cima do anterior em vez de o substituir. 
         window.display();
-    } */
+    } 
 }
 
 void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
@@ -81,7 +81,7 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
                 }
             }
         }
-        if (distribution(generator) < 50 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
+        if (distribution(generator) == 1 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
             vector<vector<double>> newLayer;
             vector<double> newLayerWeights;
             for (int n = 0; n < (*weights)[l].size(); n++) {
@@ -130,14 +130,18 @@ bool checkAdjacency(vector<int> *targetBodyParts, int seekerBodyPart) {
     }
 }
 
-void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber, vector<vector<vector<vector<double>>>> *worldNeuralWeights) {
+void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber, vector<vector<vector<vector<double>>>> *worldNeuralWeights, vector<vector<int>> *worldsMovementData) {
     vector<int> predatorBodyCoords;
     predatorBodyCoords.push_back(34);
     predatorBodyCoords.push_back(35);
     predatorBodyCoords.push_back(44);
     predatorBodyCoords.push_back(45);
     (*world)[34, 35] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(34);
+    (*worldsMovementData)[worldNumber].push_back(35);
     (*world)[44, 45] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(44);
+    (*worldsMovementData)[worldNumber].push_back(45);
     Predator predator(predatorBodyCoords);
     vector<Prey> preys;
     vector<int> preyBodyCoords;
@@ -193,16 +197,21 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     //cout << weights[0][0].size() << endl;
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(18);
+    (*worldsMovementData)[worldNumber].push_back(19);
     preyBodyCoords[0] += 50;
     preyBodyCoords[1] += 50;
     Prey prey2(preyBodyCoords, weights);
     (*world)[68, 69] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(68);
+    (*worldsMovementData)[worldNumber].push_back(69);
     preys.push_back(prey1);
     preys.push_back(prey2);
     bool flag1 = false;
     bool flag2 = false;
     bool touchingPrey = false;
     for (int t = 0; t < 20; t++) {
+        (*worldsMovementData)[worldNumber].push_back(-1);
         vector<double> input1 = (*world);
         input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
         vector<double> input2 = (*world);
@@ -242,6 +251,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     prey1.bodyCoords[bi] += toMove;
                     //cout << prey1.bodyCoords[bi] << "prey1" << endl;
                     (*world)[prey1.bodyCoords[bi]] = 1.0;
+                    (*worldsMovementData)[worldNumber].push_back(prey1.bodyCoords[bi]);
                     if (!flag1) {
                         flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
                     }
@@ -256,6 +266,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     prey2.bodyCoords[bi] += toMove;
                     //cout << prey2.bodyCoords[bi] << "prey2" << endl;
                     (*world)[prey2.bodyCoords[bi]] = 1.0;
+                    (*worldsMovementData)[worldNumber].push_back(prey2.bodyCoords[bi]);
                     if (!flag2) {
                         flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
                     }
@@ -275,6 +286,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             predator.bodyCoords[bi] += predatorMove;
             //cout << predator.bodyCoords[bi] << "predator" << endl;
             (*world)[predator.bodyCoords[bi]] = 1.0;
+            (*worldsMovementData)[worldNumber].push_back(predator.bodyCoords[bi]);
             if (!touchingPrey) {
                 touchingPrey = checkAdjacency(&prey1.bodyCoords, predator.bodyCoords[bi]);
             }
@@ -291,6 +303,7 @@ int main() {
     //TODO: MUTAÇÃO NOVAS CAMADAS POSSIVELMENTE DÁ BUG AO PASSAR PARA O FICHEIRO TEXTO, DADO QUE TEMOS VARIOS | DE SEGUIDA, QUANDO SO DEVIAM SER 2 SEGUIDA TOPS
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
+    vector<vector<int>> worldsMovementData(WORLDS);
     vector<int> fitnessScores;
     vector<vector<vector<vector<double>>>> worldNeuralWeights(WORLDS);
     for(int w = 0; w < WORLDS; w++) {
@@ -300,7 +313,7 @@ int main() {
     }
     //generateInitialGeneticMemory(&worlds[0]);
     for (int w = 0; w < WORLDS; w++) {
-        runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights);
+        runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights, &worldsMovementData);
     }
     int maxF = -10000;
     int maxFi = 0;
@@ -332,6 +345,19 @@ int main() {
     geneticData << endl;
     geneticHistory << endl << endl;
     geneticData.close();
-    geneticHistory.close(); 
+    geneticHistory.close();
+    vector<int> bestNetMovementData = worldsMovementData[maxFi];
+    ofstream movementData;
+    movementData.open("movementData.txt");
+    for (int c = 0; c < bestNetMovementData.size(); c++) {
+        if (bestNetMovementData[c] != -1) {
+            movementData << bestNetMovementData[c];
+            movementData << "+";
+        }
+        else {
+            movementData << "|";
+        }
+    }
+    movementData.close();
     return 0;
 }
