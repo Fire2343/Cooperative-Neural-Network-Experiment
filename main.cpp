@@ -8,6 +8,7 @@
 #include <chrono>
 #include "Predator.h"
 #include "Prey.h"
+#include <Windows.h>
 
 
 const int DWW = 1000; // display window width, in pixels.
@@ -46,22 +47,56 @@ vector<int> convertToXY(int coord) {
     return xycoords;
 }
 
-void displayBestOfGen() {
-    RenderWindow window(VideoMode(DWW, DWH), "SFML works!");
+void displayBestOfGen(int ua) {
+    RenderWindow window(VideoMode(DWW, DWH), "display");
 
-    while (window.isOpen())
-    {
+    int m = 0;
+    ifstream movementData;
+    movementData.open("movementData.txt");
+    string data;
+    while (window.isOpen()){
+        cout << data[m] << endl;
         Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == Event::Closed)
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
                 window.close();
+            }
         }
+        if (!movementData.eof()) {
+            getline(movementData, data);
+        }
+        if (m >= data.size()) {
+            break;
+        }
+        if (data[m] == "|"[0]) {
+           m++;
+           window.display();
+           window.clear(Color(0, 255, 255, 255));
+           Sleep(1000);
+        }
+        else {
+           if (data[m] == "+"[0]) {
+               m++;
+           }
+           else {
+               int numberSize = 1;
+               if (data[m + 1] != "+"[0]) {
+                  numberSize++;
+               }
+               stringstream converter(data.substr(m, numberSize));
+               int converted;
+               converter >> converted;
+               vector<int> coordsXY = convertToXY(converted);
+               RectangleShape bodyPart(Vector2f(ua, ua));
+               bodyPart.setPosition(coordsXY[0] * ua, coordsXY[1] * ua);
+               bodyPart.setFillColor(Color(0, 255, 0, 255));
+               window.draw(bodyPart);
+               m += numberSize;
+           }
+       }
+    }
+} 
 
-        window.clear(Color(255, 50, 150, 255)); //Clear tem de ser chamado após cada update ao renderer, sn está a desenhar por cima do anterior em vez de o substituir. 
-        window.display();
-    } 
-}
 
 void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
@@ -300,8 +335,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 }
 
 int main() {
-    //TODO: MUTAÇÃO NOVAS CAMADAS POSSIVELMENTE DÁ BUG AO PASSAR PARA O FICHEIRO TEXTO, DADO QUE TEMOS VARIOS | DE SEGUIDA, QUANDO SO DEVIAM SER 2 SEGUIDA TOPS
-    int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
+    
+    //TODO: qualquer coisa bugada ou no movimento ou a passar este para o movementData, favor investigar.
+    /* int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
     vector<int> fitnessScores;
@@ -349,6 +385,7 @@ int main() {
     vector<int> bestNetMovementData = worldsMovementData[maxFi];
     ofstream movementData;
     movementData.open("movementData.txt");
+    movementData << "|";
     for (int c = 0; c < bestNetMovementData.size(); c++) {
         if (bestNetMovementData[c] != -1) {
             movementData << bestNetMovementData[c];
@@ -358,6 +395,8 @@ int main() {
             movementData << "|";
         }
     }
+    movementData << "|";
     movementData.close();
-    return 0;
+    return 0; */
+    displayBestOfGen(100);
 }
