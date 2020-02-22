@@ -287,6 +287,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 }
 
 int main() {
+    //TODO: MUTAÇÃO NOVAS CAMADAS POSSIVELMENTE DÁ BUG AO PASSAR PARA O FICHEIRO TEXTO, DADO QUE TEMOS VARIOS | DE SEGUIDA, QUANDO SO DEVIAM SER 2 SEGUIDA TOPS
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<int> fitnessScores;
@@ -326,7 +327,7 @@ int main() {
         geneticHistory << "||";
     }
     geneticData << endl;
-    geneticHistory << endl;
+    geneticHistory << endl << endl;
     geneticData.close();
     geneticHistory.close(); 
     return 0;
