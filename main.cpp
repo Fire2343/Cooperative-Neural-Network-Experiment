@@ -95,11 +95,11 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     }
 }
 void generateInitialGeneticMemory(vector<double> *world) {
-    ofstream geneticMemory("neuralNetValues.txt", fstream::app);
+    ofstream geneticMemory("neuralNetValues.txt");
     geneticMemory << "|";
     for (int n = 0; n < 4; n++) {
         for (int i = 0; i < (*world).size() + 2; i++) {
-            geneticMemory << "0.00-";
+            geneticMemory << "0.00+";
         }
         geneticMemory << "|";
     }
@@ -153,12 +153,21 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
         char c;
         for (int i = 0; i < data.size(); i++) {
             c = data[i];
-            if (c != ("|")[0] && c != ("\n")[0] && c != ("-")[0]) {
-                stringstream converter(data.substr(i, 4));
+            if (c != ("|")[0] && c != ("+")[0] && c != (" ")[0]) {
+                int sizeNumber = 0;
+                for (int si = i; si < 100000000; si++) {
+                    //cout << si << endl;
+                    if (data[si] == "+"[0]) { 
+                        break;
+                    }
+                    sizeNumber++;
+                }
+                stringstream converter(data.substr(i, sizeNumber));
                 double converted;
                 converter >> converted;
-                //cout << converted << endl;
-                i += 3;
+                //cout << sizeNumber << "sizeNumber" << worldNumber << endl;
+                //cout << converted << "converted" << worldNumber << endl;
+                i += sizeNumber;
                 neuronWeights.push_back(converted);
             }
             else {
@@ -178,9 +187,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     geneticMemory.close();
     mutateNeuralNet(&weights);
     int size = weights.size();
-    cout << weights.size() << endl;
-    cout << weights[0].size() << endl;
-    cout << weights[0][0].size() << endl;
+    //cout << weights.size() << endl;
+    //cout << weights[0].size() << endl;
+    //cout << weights[0][0].size() << endl;
     Prey prey1(preyBodyCoords, weights);
     (*world)[18, 19] = 1.0;
     preyBodyCoords[0] += 50;
@@ -230,6 +239,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     }
                     (*world)[prey1.bodyCoords[bi]] = 0.0;
                     prey1.bodyCoords[bi] += toMove;
+                    //cout << prey1.bodyCoords[bi] << "prey1" << endl;
                     (*world)[prey1.bodyCoords[bi]] = 1.0;
                     if (!flag1) {
                         flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
@@ -238,11 +248,12 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             }
             else {
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
-                    if (!insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove))) {
+                    if (!insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove))) {
                         break;
                     }
                     (*world)[prey2.bodyCoords[bi]] = 0.0;
                     prey2.bodyCoords[bi] += toMove;
+                    //cout << prey2.bodyCoords[bi] << "prey2" << endl;
                     (*world)[prey2.bodyCoords[bi]] = 1.0;
                     if (!flag2) {
                         flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
@@ -261,6 +272,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             }
             (*world)[predator.bodyCoords[bi]] = 0.0;
             predator.bodyCoords[bi] += predatorMove;
+            //cout << predator.bodyCoords[bi] << "predator" << endl;
             (*world)[predator.bodyCoords[bi]] = 1.0;
             if (!touchingPrey) {
                 touchingPrey = checkAdjacency(&prey1.bodyCoords, predator.bodyCoords[bi]);
@@ -285,7 +297,9 @@ int main() {
         fitnessScores.push_back(0);
     }
     //generateInitialGeneticMemory(&worlds[0]);
-    //runWorld(&worlds[0]);
+    for (int w = 0; w < WORLDS; w++) {
+        runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights);
+    }
     int maxF = -10000;
     int maxFi = 0;
     for (int i = 0; i < fitnessScores.size(); i++) {
@@ -298,22 +312,22 @@ int main() {
     ofstream geneticData;
     ofstream geneticHistory;
     geneticData.open("neuralNetValues.txt");
-    geneticHistory.open("neuralNetHistoricalData.txt");
+    geneticHistory.open("neuralNetHistoricalData.txt", ofstream::app);
     for (int l = 0; l < nextGenNet.size(); l++) {
         for (int n = 0; n < nextGenNet[l].size(); n++) {
             geneticData << "|";
             geneticHistory << "|";
             for (int w = 0; w < nextGenNet[l][n].size(); w++) {
-                geneticData << nextGenNet[l][n][w] << "-";
-                geneticHistory << nextGenNet[l][n][w] << "-";
+                geneticData << nextGenNet[l][n][w] << "+";
+                geneticHistory << nextGenNet[l][n][w] << "+";
             }
         }
-        geneticData << "|";
-        geneticHistory << "|";
+        geneticData << "||";
+        geneticHistory << "||";
     }
     geneticData << endl;
     geneticHistory << endl;
     geneticData.close();
-    geneticHistory.close();
-	return 0;
+    geneticHistory.close(); 
+    return 0;
 }
