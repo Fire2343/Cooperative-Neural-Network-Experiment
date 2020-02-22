@@ -81,14 +81,15 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
                 }
             }
         }
-        if (distribution(generator) == 1 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
+        if (distribution(generator) < 50 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
             vector<vector<double>> newLayer;
+            vector<double> newLayerWeights;
             for (int n = 0; n < (*weights)[l].size(); n++) {
-                vector<double> newLayerWeights;
                 for (int w = 0; w < (*weights)[l][n].size(); w++) {
                     newLayerWeights.push_back(nlvdistribution(generator));
                 }
                 newLayer.push_back(newLayerWeights);
+                newLayerWeights.clear();
             }
             (*weights).push_back(newLayer);
         }
@@ -323,9 +324,11 @@ int main() {
                 geneticHistory << nextGenNet[l][n][w] << "+";
             }
         }
-        geneticData << "||";
-        geneticHistory << "||";
+        geneticData << "|";
+        geneticHistory << "|";
     }
+    geneticData << "|";
+    geneticHistory << "|";
     geneticData << endl;
     geneticHistory << endl << endl;
     geneticData.close();
