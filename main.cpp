@@ -14,7 +14,7 @@
 const int DWW = 1000; // display window width, in pixels.
 const int DWH = 1000; //display window height, in pixels.
 const int WSL = 10; //size of both world dimensions, in units-area.
-const int WORLDS = 10; //each thread runs a world
+const int WORLDS = 3; //each thread runs a world
 
 
 using namespace sf;
@@ -42,10 +42,7 @@ vector<int> convertToXY(int coord) {
 
 bool insideBounds(vector<int> coords, int move) {
     if (abs(move) == 1) {
-        if (convertToXY(coords[1] * 10 + coords[0])[1] != convertToXY(coords[1] * 10 + coords[0] - move)[1]) {
-            cout << coords[0] << endl;
-            cout << coords[1] << endl;
-            cout << convertToXY(coords[1] * 10 + coords[0] + move)[1] << endl;
+        if (convertToXY(coords[1] * 10 + coords[0])[1] != convertToXY(coords[1] * 10 + coords[0] - move)[1]) {            
             return false;
         }
     }
@@ -348,12 +345,8 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
                     buffer.push_back(prey2.bodyCoords[bi]);
                     if (insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove), toMove) == false || (*world)[prey2.bodyCoords[bi] + toMove] != 0.0) {
-                        cout << "activated1" << endl;
-                        cout << prey2.bodyCoords[bi] << endl;
-                        cout << prey2.bodyCoords[bi] + toMove << endl;
                         if (belongsToSelf(prey2.bodyCoords[bi] + toMove, &prey2.bodyCoords) == false) {
                             occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
-                            cout << "activated2" << endl;
                             dontMove = true;
                             break;
                         }
@@ -434,57 +427,74 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    generateInitialGeneticMemory(&worlds[0]);
-    for (int w = 0; w < WORLDS; w++) {
+    //generateInitialGeneticMemory(&worlds[0]);
+    /*for (int w = 0; w < WORLDS; w++) {
         runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights, &worldsMovementData);
-    }
-    int maxF = -10000;
-    int maxFi = 0;
-    for (int i = 0; i < fitnessScores.size(); i++) {
-        if (fitnessScores[i] > maxF) {
-            maxF = fitnessScores[i];
-            maxFi = i;
+    }*/
+    for (int g = 0; g < 20; g++) {
+        thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
+        thread second(runWorld, &worlds[1], &fitnessScores, 1, &worldNeuralWeights, &worldsMovementData);
+        thread third(runWorld, &worlds[2], &fitnessScores, 2, &worldNeuralWeights, &worldsMovementData);
+        first.join();
+        second.join();
+        third.join();
+        int maxF = -10000;
+        int maxFi = 0;
+        for (int i = 0; i < fitnessScores.size(); i++) {
+            if (fitnessScores[i] > maxF) {
+                maxF = fitnessScores[i];
+                maxFi = i;
+            }
         }
-    }
-    vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
-    ofstream geneticData;
-    ofstream geneticHistory;
-    geneticData.open("neuralNetValues.txt");
-    geneticHistory.open("neuralNetHistoricalData.txt", ofstream::app);
-    for (int l = 0; l < nextGenNet.size(); l++) {
-        for (int n = 0; n < nextGenNet[l].size(); n++) {
+        vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
+        ofstream geneticData;
+        ofstream geneticHistory;
+        geneticData.open("neuralNetValues.txt");
+        geneticHistory.open("neuralNetHistoricalData.txt", ofstream::app);
+        for (int l = 0; l < nextGenNet.size(); l++) {
+            for (int n = 0; n < nextGenNet[l].size(); n++) {
+                geneticData << "|";
+                geneticHistory << "|";
+                for (int w = 0; w < nextGenNet[l][n].size(); w++) {
+                    geneticData << nextGenNet[l][n][w] << "+";
+                    geneticHistory << nextGenNet[l][n][w] << "+";
+                }
+            }
             geneticData << "|";
             geneticHistory << "|";
-            for (int w = 0; w < nextGenNet[l][n].size(); w++) {
-                geneticData << nextGenNet[l][n][w] << "+";
-                geneticHistory << nextGenNet[l][n][w] << "+";
-            }
         }
         geneticData << "|";
         geneticHistory << "|";
-    }
-    geneticData << "|";
-    geneticHistory << "|";
-    geneticData << endl;
-    geneticHistory << endl << endl;
-    geneticData.close();
-    geneticHistory.close();
-    vector<int> bestNetMovementData = worldsMovementData[maxFi];
-    ofstream movementData;
-    movementData.open("movementData.txt");
-    movementData << "|";
-    for (int c = 0; c < bestNetMovementData.size(); c++) {
-        //cout << bestNetMovementData[c] << endl;
-        if (bestNetMovementData[c] != -1) {
-            movementData << bestNetMovementData[c];
-            movementData << "+";
+        geneticData << endl;
+        geneticHistory << endl << endl;
+        geneticData.close();
+        geneticHistory.close();
+        vector<int> bestNetMovementData = worldsMovementData[maxFi];
+        ofstream movementData;
+        ofstream movementHistory;
+        movementData.open("movementData.txt");
+        movementHistory.open("movementHistory.txt", fstream::app);
+        movementData << "|";
+        movementHistory << "|";
+        for (int c = 0; c < bestNetMovementData.size(); c++) {
+            //cout << bestNetMovementData[c] << endl;
+            if (bestNetMovementData[c] != -1) {
+                movementData << bestNetMovementData[c];
+                movementData << "+";
+                movementHistory << bestNetMovementData[c];
+                movementHistory << "+";
+            }
+            else {
+                movementData << "|";
+                movementHistory << "|";
+            }
         }
-        else {
-            movementData << "|";
-        }
+        movementData << "|";
+        movementHistory << "|" << endl;
+        movementHistory << endl;
+        movementData.close();
+        movementHistory.close();
     }
-    movementData << "|";
-    movementData.close();
     displayBestOfGen(100);
     return 0;
 }
