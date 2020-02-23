@@ -20,16 +20,6 @@ const int WORLDS = 10; //each thread runs a world
 using namespace sf;
 using namespace std;
 
-bool insideBounds(vector<int> coords) {
-    if (coords[0] < 0 || coords[0] > 9) {
-        return false;
-    }
-    if (coords[1] < 0 || coords[1] > 9) {
-        return false;
-    }
-    return true;
-}
-
 vector<int> convertToXY(int coord) {
     vector<int> xycoords;
     int x;
@@ -48,6 +38,24 @@ vector<int> convertToXY(int coord) {
     xycoords.push_back(x);
     xycoords.push_back(y);
     return xycoords;
+}
+
+bool insideBounds(vector<int> coords, int move) {
+    if (abs(move) == 1) {
+        if (convertToXY(coords[1] * 10 + coords[0])[1] != convertToXY(coords[1] * 10 + coords[0] - move)[1]) {
+            cout << coords[0] << endl;
+            cout << coords[1] << endl;
+            cout << convertToXY(coords[1] * 10 + coords[0] + move)[1] << endl;
+            return false;
+        }
+    }
+    if (coords[0] < 0 || coords[0] > 9) {
+        return false;
+    }
+    if (coords[1] < 0 || coords[1] > 9) {
+        return false;
+    }
+    return true;
 }
 
 void displayBestOfGen(int ua) {
@@ -75,7 +83,7 @@ void displayBestOfGen(int ua) {
            m++;
            window.display();
            window.clear(Color(0, 255, 255, 255));
-           Sleep(5000);
+           Sleep(500);
         }
         else {
            if (data[m] == "+"[0]) {
@@ -89,11 +97,11 @@ void displayBestOfGen(int ua) {
                stringstream converter(data.substr(m, numberSize));
                int converted;
                converter >> converted;
-               cout << converted << endl;
+               //cout << converted << endl;
                vector<int> coordsXY = convertToXY(converted);
                RectangleShape bodyPart(Vector2f(ua, ua));
-               cout << coordsXY[0] << endl;
-               cout << coordsXY[1] << endl;
+               //cout << coordsXY[0] << endl;
+               //cout << coordsXY[1] << endl;
                bodyPart.setPosition(coordsXY[0] * ua, coordsXY[1] * ua);
                bodyPart.setFillColor(Color(0, 255, 0, 255));
                window.draw(bodyPart);
@@ -152,23 +160,45 @@ void generateInitialGeneticMemory(vector<double> *world) {
 bool checkAdjacency(vector<int> *targetBodyParts, int seekerBodyPart) {
     for (int i = 0; i < (*targetBodyParts).size(); i++) {
         int d = abs((*targetBodyParts)[i] - seekerBodyPart);
-        if (!insideBounds(convertToXY(d))) {
-            continue;
-        }
         switch (d) 
         {
             case 11:
-                return true;
+                if (convertToXY((*targetBodyParts)[i])[1] != convertToXY(seekerBodyPart)[1]) {
+                    return true;
+                }
+                else {
+                    break;
+                }
             case 10:
-                return true;
+                if (convertToXY((*targetBodyParts)[i])[1] != convertToXY(seekerBodyPart)[1]) {
+                    return true;
+                }
+                else {
+                    break;
+                }
             case 9:
-                return true;
+                if (convertToXY((*targetBodyParts)[i])[1] != convertToXY(seekerBodyPart)[1]) {
+                    return true;
+                }
+                else {
+                    break;
+                }
             case 1:
                 return true;
             default:
-                return false;
+                break;
         }
     }
+    return false;
+}
+
+bool belongsToSelf(int c, vector<int>* bodyParts) {
+    for (int i = 0; i < (*bodyParts).size(); i++) {
+        if ((*bodyParts)[i] == c) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber, vector<vector<vector<vector<double>>>> *worldNeuralWeights, vector<vector<int>> *worldsMovementData) {
@@ -235,9 +265,6 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     geneticMemory.close();
     mutateNeuralNet(&weights);
     int size = weights.size();
-    //cout << weights.size() << endl;
-    //cout << weights[0].size() << endl;
-    //cout << weights[0][0].size() << endl;
     Prey prey1(preyBodyCoords, weights);
     (*world)[18] = 1.0;
     (*world)[19] = 1.0;
@@ -255,8 +282,13 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     bool flag1 = false;
     bool flag2 = false;
     bool touchingPrey = false;
+    bool endGame = false;
     for (int t = 0; t < 20; t++) {
+        flag1 = false;
+        flag2 = false;
         (*worldsMovementData)[worldNumber].push_back(-1);
+        vector<int> occupiedCoords;
+        vector <int> unnocupiedCoords;
         vector<double> input1 = (*world);
         input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
         vector<double> input2 = (*world);
@@ -287,57 +319,102 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     }
                 }
             }
+            bool dontMove = false;
             if (osi == 0) {
+                vector<int> buffer;
                 for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {  //Check to see if both preys are touching predator, so their roles may change.                    
-                    if (!insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove))) {
-                        break;
+                    buffer.push_back(prey1.bodyCoords[bi]);
+                    if (insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove), toMove) == false || (*world)[prey1.bodyCoords[bi] + toMove] != 0.0) {
+                        if (belongsToSelf(prey1.bodyCoords[bi] + toMove, &prey1.bodyCoords) == false) {
+                            occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
+                            dontMove = true;
+                            break;
+                        }
                     }
-                    (*world)[prey1.bodyCoords[bi]] = 0.0;
-                    prey1.bodyCoords[bi] += toMove;
-                    //cout << prey1.bodyCoords[bi] << "prey1" << endl;
-                    (*world)[prey1.bodyCoords[bi]] = 1.0;
-                    (*worldsMovementData)[worldNumber].push_back(prey1.bodyCoords[bi]);
-                    if (!flag1) {
-                        flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
+                }
+                if (!dontMove) {
+                    for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {
+                        unnocupiedCoords.push_back(prey1.bodyCoords[bi]);
+                        prey1.bodyCoords[bi] += toMove;
+                        occupiedCoords.push_back(prey1.bodyCoords[bi]);
+                        if (!flag1) {
+                            flag1 = checkAdjacency(&predator.bodyCoords, prey1.bodyCoords[bi]);
+                        }
                     }
                 }
             }
             else {
+                vector<int> buffer;
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
-                    if (!insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove))) {
-                        break;
+                    buffer.push_back(prey2.bodyCoords[bi]);
+                    if (insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove), toMove) == false || (*world)[prey2.bodyCoords[bi] + toMove] != 0.0) {
+                        cout << "activated1" << endl;
+                        cout << prey2.bodyCoords[bi] << endl;
+                        cout << prey2.bodyCoords[bi] + toMove << endl;
+                        if (belongsToSelf(prey2.bodyCoords[bi] + toMove, &prey2.bodyCoords) == false) {
+                            occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
+                            cout << "activated2" << endl;
+                            dontMove = true;
+                            break;
+                        }
                     }
-                    (*world)[prey2.bodyCoords[bi]] = 0.0;
-                    prey2.bodyCoords[bi] += toMove;
-                    //cout << prey2.bodyCoords[bi] << "prey2" << endl;
-                    (*world)[prey2.bodyCoords[bi]] = 1.0;
-                    (*worldsMovementData)[worldNumber].push_back(prey2.bodyCoords[bi]);
-                    if (!flag2) {
-                        flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
+                }
+                if (!dontMove) {
+                    for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
+                        unnocupiedCoords.push_back(prey2.bodyCoords[bi]);
+                        prey2.bodyCoords[bi] += toMove;
+                        occupiedCoords.push_back(prey2.bodyCoords[bi]);
+                        if (!flag2) {
+                            flag2 = checkAdjacency(&predator.bodyCoords, prey2.bodyCoords[bi]);
+                        }
                     }
                 }
             }
         }
         if (flag1 && flag2) {
-            (*fitnessValues)[worldNumber] += 1000 / t;
-            break;
+            (*fitnessValues)[worldNumber] += 1000 / (t + 1);
+            endGame = true;
         }
-        int predatorMove = predator.chooseMove(preys);
-        for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
-            if (!insideBounds(convertToXY(predator.bodyCoords[bi] + predatorMove))) {
-                break;
+        if (!endGame) {
+            bool dontMove = false;
+            int predatorMove = predator.chooseMove(preys);
+            vector<int> buffer;
+            for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
+                buffer.push_back(predator.bodyCoords[bi]);
+                if (insideBounds(convertToXY(predator.bodyCoords[bi] + predatorMove), predatorMove) == false || (*world)[predator.bodyCoords[bi] + predatorMove] != 0.0) {
+                    if (belongsToSelf(predator.bodyCoords[bi] + predatorMove, &predator.bodyCoords) == false) {
+                        occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
+                        dontMove = true;
+                        break;
+                    }
+                }
             }
-            (*world)[predator.bodyCoords[bi]] = 0.0;
-            predator.bodyCoords[bi] += predatorMove;
-            //cout << predator.bodyCoords[bi] << "predator" << endl;
-            (*world)[predator.bodyCoords[bi]] = 1.0;
-            (*worldsMovementData)[worldNumber].push_back(predator.bodyCoords[bi]);
-            if (!touchingPrey) {
-                touchingPrey = checkAdjacency(&prey1.bodyCoords, predator.bodyCoords[bi]);
+            if (!dontMove) {
+                for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
+                    unnocupiedCoords.push_back(predator.bodyCoords[bi]);
+                    predator.bodyCoords[bi] += predatorMove;
+                    occupiedCoords.push_back(predator.bodyCoords[bi]);
+                    if (!touchingPrey) {
+                        touchingPrey = checkAdjacency(&prey1.bodyCoords, predator.bodyCoords[bi]);
+                        if (!touchingPrey) {
+                           touchingPrey = checkAdjacency(&prey2.bodyCoords, predator.bodyCoords[bi]);
+                        }
+                    }
+                }
+            }
+            if (touchingPrey) {
+                (*fitnessValues)[worldNumber] -= 100 / (t + 1);
+                endGame = true;
             }
         }
-        if (touchingPrey) {
-            (*fitnessValues)[worldNumber] -= 100 / t;
+        for (int i = 0; i < unnocupiedCoords.size(); i++) {
+            (*world)[unnocupiedCoords[i]] = 0.0;
+        }
+        for (int i = 0; i < occupiedCoords.size(); i++) {
+            (*world)[occupiedCoords[i]] = 1.0;
+            (*worldsMovementData)[worldNumber].push_back(occupiedCoords[i]);
+        }
+        if (endGame) {
             break;
         }
     }
@@ -346,6 +423,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 
 int main() {
     
+    //TODO: MELHORAR FUNÇÃO OUT OF BOUNDS PARA N FAZER TIPO 19->20!
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
@@ -396,6 +474,7 @@ int main() {
     movementData.open("movementData.txt");
     movementData << "|";
     for (int c = 0; c < bestNetMovementData.size(); c++) {
+        //cout << bestNetMovementData[c] << endl;
         if (bestNetMovementData[c] != -1) {
             movementData << bestNetMovementData[c];
             movementData << "+";
