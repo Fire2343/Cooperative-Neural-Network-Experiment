@@ -35,8 +35,11 @@ vector<int> convertToXY(int coord) {
     int x;
     int y;
     if (coord / 10 > 0) {
-        x = ((double(coord) / 10 - coord / 10) * 10);
         y = int(coord / 10);
+        x = 0;
+        for (int c = y * 10; c < coord; c++) {
+            x++;
+        }
     }
     else {
         x = coord;
@@ -55,7 +58,7 @@ void displayBestOfGen(int ua) {
     movementData.open("movementData.txt");
     string data;
     while (window.isOpen()){
-        cout << data[m] << endl;
+        //cout << data[m] << endl;
         Event event;
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) {
@@ -72,7 +75,7 @@ void displayBestOfGen(int ua) {
            m++;
            window.display();
            window.clear(Color(0, 255, 255, 255));
-           Sleep(1000);
+           Sleep(5000);
         }
         else {
            if (data[m] == "+"[0]) {
@@ -86,8 +89,11 @@ void displayBestOfGen(int ua) {
                stringstream converter(data.substr(m, numberSize));
                int converted;
                converter >> converted;
+               cout << converted << endl;
                vector<int> coordsXY = convertToXY(converted);
                RectangleShape bodyPart(Vector2f(ua, ua));
+               cout << coordsXY[0] << endl;
+               cout << coordsXY[1] << endl;
                bodyPart.setPosition(coordsXY[0] * ua, coordsXY[1] * ua);
                bodyPart.setFillColor(Color(0, 255, 0, 255));
                window.draw(bodyPart);
@@ -171,10 +177,12 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     predatorBodyCoords.push_back(35);
     predatorBodyCoords.push_back(44);
     predatorBodyCoords.push_back(45);
-    (*world)[34, 35] = 1.0;
+    (*world)[34] = 1.0;
+    (*world)[35] = 1.0;
     (*worldsMovementData)[worldNumber].push_back(34);
     (*worldsMovementData)[worldNumber].push_back(35);
-    (*world)[44, 45] = 1.0;
+    (*world)[44] = 1.0;
+    (*world)[45] = 1.0;
     (*worldsMovementData)[worldNumber].push_back(44);
     (*worldsMovementData)[worldNumber].push_back(45);
     Predator predator(predatorBodyCoords);
@@ -231,13 +239,15 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     //cout << weights[0].size() << endl;
     //cout << weights[0][0].size() << endl;
     Prey prey1(preyBodyCoords, weights);
-    (*world)[18, 19] = 1.0;
+    (*world)[18] = 1.0;
+    (*world)[19] = 1.0;
     (*worldsMovementData)[worldNumber].push_back(18);
     (*worldsMovementData)[worldNumber].push_back(19);
     preyBodyCoords[0] += 50;
     preyBodyCoords[1] += 50;
     Prey prey2(preyBodyCoords, weights);
-    (*world)[68, 69] = 1.0;
+    (*world)[68] = 1.0;
+    (*world)[69] = 1.0;
     (*worldsMovementData)[worldNumber].push_back(68);
     (*worldsMovementData)[worldNumber].push_back(69);
     preys.push_back(prey1);
@@ -336,8 +346,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 
 int main() {
     
-    //TODO: qualquer coisa bugada ou no movimento ou a passar este para o movementData, favor investigar.
-    /* int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
+    int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
     vector<int> fitnessScores;
@@ -347,7 +356,7 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    //generateInitialGeneticMemory(&worlds[0]);
+    generateInitialGeneticMemory(&worlds[0]);
     for (int w = 0; w < WORLDS; w++) {
         runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights, &worldsMovementData);
     }
@@ -397,6 +406,6 @@ int main() {
     }
     movementData << "|";
     movementData.close();
-    return 0; */
     displayBestOfGen(100);
+    return 0;
 }
