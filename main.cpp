@@ -88,7 +88,7 @@ void displayBestOfGen(int ua) {
            m++;
            window.display();
            window.clear(Color(0, 255, 255, 255));
-           Sleep(500);
+           Sleep(2000);
         }
         else {
            if (data[m] == "+"[0]) {
@@ -102,11 +102,8 @@ void displayBestOfGen(int ua) {
                stringstream converter(data.substr(m, numberSize));
                int converted;
                converter >> converted;
-               //cout << converted << endl;
                vector<int> coordsXY = convertToXY(converted);
-               RectangleShape bodyPart(Vector2f(ua, ua));
-               //cout << coordsXY[0] << endl;
-               //cout << coordsXY[1] << endl;
+               RectangleShape bodyPart(Vector2f(ua, ua));              
                bodyPart.setPosition(coordsXY[0] * ua, coordsXY[1] * ua);
                bodyPart.setFillColor(Color(0, 255, 0, 255));
                window.draw(bodyPart);
@@ -121,8 +118,8 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
     mt19937_64 generator(WorldSeed);
     uniform_int_distribution<int> distribution(0, 100);
-    uniform_real_distribution<double> vdistribution(-1.00, 1.00);
-    uniform_real_distribution<double> nlvdistribution(-1.00, 1.00);
+    uniform_real_distribution<double> vdistribution(-0.10, 0.10);
+    uniform_real_distribution<double> nlvdistribution(-0.20, 0.20);
     for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
         for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
             if (distribution(generator) == 1 && l < (*weights).size() - 1 && (*weights)[l].size() <= 300) { //oportunidade de mutação para criação de novos neurónios
@@ -141,7 +138,7 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
         if (distribution(generator) == 1 && l == (*weights).size() - 1 && (*weights).size() <= 4) { //oportunidade de mutaçao de novas camadas
             vector<vector<double>> newLayer;
             vector<double> newLayerWeights;
-            uniform_int_distribution<int> nNdistribution(-(int((*weights)[l].size() / 2)), (*weights)[l].size());
+            uniform_int_distribution<int> nNdistribution(-(int((*weights)[l].size() / 2)), 0);
             for (int n = 0; n < (*weights)[l].size() + nNdistribution(generator); n++) {
                 for (int w = 0; w < (*weights)[l].size(); w++) {
                     newLayerWeights.push_back(nlvdistribution(generator));
@@ -466,8 +463,8 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    //generateInitialGeneticMemory(&worlds[0]);
-    for (int g = 0; g < 100; g++) {
+    generateInitialGeneticMemory(&worlds[0]);
+    for (int g = 0; g < 1; g++) {
         cout << g << endl;
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
         thread second(runWorld, &worlds[1], &fitnessScores, 1, &worldNeuralWeights, &worldsMovementData);
