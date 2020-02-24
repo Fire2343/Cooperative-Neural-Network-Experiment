@@ -14,6 +14,10 @@ double Prey::sigmoidFunction(double z) {
 
 double Prey::neuronActivationFunction(vector<double> inputs, vector<double> weights) {
 	double dotProduct = 0;
+	if (inputs.size() != weights.size()) {
+		cout << inputs.size() << "input" << endl;
+		cout << weights.size() << "weights" << endl;
+	}
 	for (int i = 0; i < inputs.size(); i++) {
 		dotProduct += inputs[i] * weights[i];
 	}
@@ -26,8 +30,11 @@ vector<double> Prey::neuralNet(vector<double> inputs) {
 	for (int l = 0; l < weights.size(); l++) {
 		nextLayerInputs.clear();
 		for (int n = 0; n < weights[l].size(); n++) {
+			//cout << weights.size() << endl;
+			//cout << l << endl;
 			nextLayerInputs.push_back(neuronActivationFunction(previousLayerInputs, weights[l][n]));
 		}
+		previousLayerInputs.clear();
 		previousLayerInputs = nextLayerInputs;
 	}
 	return nextLayerInputs;

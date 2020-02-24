@@ -125,21 +125,25 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     uniform_real_distribution<double> nlvdistribution(-1.00, 1.00);
     for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
         for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
-            if (distribution(generator) == 1 && l < (*weights).size() - 1) { //opurtunidade de mutação para criação de novos neurónios
+            if (distribution(generator) == 1 && l < (*weights).size() - 1 && (*weights)[l].size() <= 300) { //oportunidade de mutação para criação de novos neurónios
                 vector<double> newNeuron = (*weights)[l][n];
                 (*weights)[l].push_back(newNeuron);
+                for (int nln = 0; nln < (*weights)[l + 1].size(); nln++) {
+                    (*weights)[l + 1][nln].push_back(nlvdistribution(generator));
+                }
             }
             for (int w = 0; w < (*weights)[l][n].size(); w++) { // percorrer pesos do neuronio
-                if (distribution(generator) == 1) { // opurtunidade de mutação para alterar os pesos nos neurónio 
+                if (distribution(generator) == 1) { // oportunidade de mutação para alterar os pesos nos neurónio 
                     (*weights)[l][n][w] += vdistribution(generator);
                 }
             }
         }
-        if (distribution(generator) == 1 && l == (*weights).size() - 1) { //opurtunidade de mutaçao de novas camadas
+        if (distribution(generator) == 1 && l == (*weights).size() - 1 && (*weights).size() <= 4) { //oportunidade de mutaçao de novas camadas
             vector<vector<double>> newLayer;
             vector<double> newLayerWeights;
-            for (int n = 0; n < (*weights)[l].size(); n++) {
-                for (int w = 0; w < (*weights)[l][n].size(); w++) {
+            uniform_int_distribution<int> nNdistribution(-(int((*weights)[l].size() / 2)), (*weights)[l].size());
+            for (int n = 0; n < (*weights)[l].size() + nNdistribution(generator); n++) {
+                for (int w = 0; w < (*weights)[l].size(); w++) {
                     newLayerWeights.push_back(nlvdistribution(generator));
                 }
                 newLayer.push_back(newLayerWeights);
@@ -158,7 +162,7 @@ void generateInitialGeneticMemory(vector<double> *world) {
         }
         geneticMemory << "|";
     }
-    geneticMemory << "|" << endl;
+    geneticMemory << "|";
     geneticMemory.close();
 }
 
@@ -236,7 +240,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
         char c;
         for (int i = 0; i < data.size(); i++) {
             c = data[i];
-            if (c != ("|")[0] && c != ("+")[0] && c != (" ")[0]) {
+            if (c != ("|")[0] && c != ("+")[0]) {
                 int sizeNumber = 0;
                 for (int si = i; si < 100000000; si++) {
                     //cout << si << endl;
@@ -446,7 +450,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 
 int main() {
     
-    //TODO: AS CELULAS PODEM IR PARA CIMA DE ELAS MESMAS!
+    //TODO: BUG NA NEURAL NET, EXISTE UMA DISCREPANCIA ENTRE O TAMANHO DOS INPUTS E O TAMANHO DOS NEURONIOS NA ULTIMA CAMADA DEPOIS DE OCURRER MUTACAO, FAVOR EXAMINAR!
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
@@ -457,11 +461,9 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    generateInitialGeneticMemory(&worlds[0]);
-    /*for (int w = 0; w < WORLDS; w++) {
-        runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights, &worldsMovementData);
-    }*/
+    //generateInitialGeneticMemory(&worlds[0]);
     for (int g = 0; g < 100; g++) {
+        cout << g << endl;
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
         thread second(runWorld, &worlds[1], &fitnessScores, 1, &worldNeuralWeights, &worldsMovementData);
         thread third(runWorld, &worlds[2], &fitnessScores, 2, &worldNeuralWeights, &worldsMovementData);
@@ -476,7 +478,7 @@ int main() {
                 maxFi = i;
             }
         }
-        //cout << fitnessScores[maxFi] << endl;
+        cout << fitnessScores[maxFi] << endl;
         vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
         ofstream geneticData;
         ofstream geneticHistory;
