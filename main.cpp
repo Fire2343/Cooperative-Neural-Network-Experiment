@@ -398,6 +398,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
         }
         if (flag1 && flag2) {
             (*fitnessValues)[worldNumber] += 10000 / ((t + 1) + moves);
+            occupiedCoords.insert(occupiedCoords.end(), predator.bodyCoords.begin(), predator.bodyCoords.end());
             endGame = true;
         }
         if (!endGame) {
@@ -463,7 +464,7 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    //generateInitialGeneticMemory(&worlds[0]);
+    //generateInitialGeneticMemory(&worlds[0]); // DO NOT ACTIVATE IF YOU DONT WANT TO START TRAINING PROCESS ALL OVER AGAIN!
     for (int g = 0; g < 1; g++) {
         cout << g << endl;
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
