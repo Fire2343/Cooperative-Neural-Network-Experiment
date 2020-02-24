@@ -42,5 +42,17 @@ int Predator::chooseMove(vector<Prey> preys) {
 	if (distanceY != 0) {
 		directionY = (distanceY / abs(distanceY)) * 10;
 	}
+	if(directionX != 0) {
+		if (xcoords[0] == 9) {
+			if (directionX == 1) {
+				directionX = 0;
+			}
+		}
+		if (xcoords[0] == 0) {
+			if (directionX == -1) {
+				directionX = 0;
+			}
+		}
+	}
 	return directionX + directionY;
 }

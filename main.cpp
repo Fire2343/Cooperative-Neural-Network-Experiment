@@ -225,7 +225,6 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     (*worldsMovementData)[worldNumber].push_back(41);
     (*worldsMovementData)[worldNumber].push_back(42);
     Predator predator(predatorBodyCoords);
-    vector<Prey> preys;
     vector<int> preyBodyCoords;
     preyBodyCoords.push_back(18);
     preyBodyCoords.push_back(19);
@@ -286,8 +285,6 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     (*world)[69] = 1.0;
     (*worldsMovementData)[worldNumber].push_back(68);
     (*worldsMovementData)[worldNumber].push_back(69);
-    preys.push_back(prey1);
-    preys.push_back(prey2);
     bool flag1 = false;
     bool flag2 = false;
     bool touchingPrey = false;
@@ -295,7 +292,10 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     vector<int> occupiedCoords;
     vector <int> unnocupiedCoords;
     int moves = 0;
-    for (int t = 0; t < 20; t++) {
+    for (int t = 0; t < 20; t++) {        
+        vector<Prey> preys;
+        preys.push_back(prey1);
+        preys.push_back(prey2);
         flag1 = false;
         flag2 = false;
         (*worldsMovementData)[worldNumber].push_back(-1);
@@ -455,9 +455,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     (*worldNeuralWeights)[worldNumber] = weights;
 }
 
-int main() {
-    
-    //TODO: BUG NA NEURAL NET, EXISTE UMA DISCREPANCIA ENTRE O TAMANHO DOS INPUTS E O TAMANHO DOS NEURONIOS NA ULTIMA CAMADA DEPOIS DE OCURRER MUTACAO, FAVOR EXAMINAR!
+int main() {    
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
@@ -519,7 +517,6 @@ int main() {
         movementData << "|";
         movementHistory << "|";
         for (int c = 0; c < bestNetMovementData.size(); c++) {
-            //cout << bestNetMovementData[c] << endl;
             if (bestNetMovementData[c] != -1) {
                 movementData << bestNetMovementData[c];
                 movementData << "+";
