@@ -121,8 +121,8 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     unsigned WorldSeed = chrono::system_clock::now().time_since_epoch().count();
     mt19937_64 generator(WorldSeed);
     uniform_int_distribution<int> distribution(0, 100);
-    uniform_real_distribution<double> vdistribution(-0.10, 0.10);
-    uniform_real_distribution<double> nlvdistribution(-1.00, 1.00);
+    uniform_real_distribution<double> vdistribution(-1.00, 1.00);
+    uniform_real_distribution<double> nlvdistribution(-2.00, 2.00);
     for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
         for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
             if (distribution(generator) == 1 && l < (*weights).size() - 1 && (*weights)[l].size() <= 300) { //oportunidade de mutação para criação de novos neurónios
@@ -461,7 +461,7 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    //generateInitialGeneticMemory(&worlds[0]);
+    generateInitialGeneticMemory(&worlds[0]);
     for (int g = 0; g < 100; g++) {
         cout << g << endl;
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
