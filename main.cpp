@@ -46,6 +46,14 @@ bool insideBounds(vector<int> coords, int move) {
             return false;
         }
     }
+    else {
+        if (convertToXY(coords[1] * 10 + coords[0])[1] == convertToXY(coords[1] * 10 + coords[0] - move)[1]) {
+            return false;
+        }
+        if (abs(convertToXY(coords[1] * 10 + coords[0])[0] - convertToXY(coords[1] * 10 + coords[0] - move)[0]) > 1) {
+            return false;
+        }
+    }
     if (coords[0] < 0 || coords[0] > 9) {
         return false;
     }
@@ -280,12 +288,16 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     bool flag2 = false;
     bool touchingPrey = false;
     bool endGame = false;
+    vector<int> occupiedCoords;
+    vector <int> unnocupiedCoords;
     for (int t = 0; t < 20; t++) {
         flag1 = false;
         flag2 = false;
         (*worldsMovementData)[worldNumber].push_back(-1);
-        vector<int> occupiedCoords;
-        vector <int> unnocupiedCoords;
+        unnocupiedCoords.clear();
+        occupiedCoords.clear();
+        //vector<int> occupiedCoords;
+        //vector <int> unnocupiedCoords;
         vector<double> input1 = (*world);
         input1.insert(input1.end(), prey1.bodyCoords.begin(), prey1.bodyCoords.end());
         vector<double> input2 = (*world);
@@ -321,11 +333,14 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                 vector<int> buffer;
                 for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {  //Check to see if both preys are touching predator, so their roles may change.                    
                     buffer.push_back(prey1.bodyCoords[bi]);
-                    if (insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove), toMove) == false || (*world)[prey1.bodyCoords[bi] + toMove] != 0.0) {
-                        if (belongsToSelf(prey1.bodyCoords[bi] + toMove, &prey1.bodyCoords) == false) {
-                            occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
-                            dontMove = true;
-                            break;
+                    if (insideBounds(convertToXY(prey1.bodyCoords[bi] + toMove), toMove) == false) {
+                        dontMove = true;
+                    }
+                    else {
+                        if ((*world)[prey1.bodyCoords[bi] + toMove] != 0.0) {
+                            if (belongsToSelf(prey1.bodyCoords[bi] + toMove, &prey1.bodyCoords) == false) {
+                                dontMove = true;
+                            }
                         }
                     }
                 }
@@ -339,16 +354,22 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                         }
                     }
                 }
+                else {
+                    occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
+                }
             }
             else {
                 vector<int> buffer;
                 for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
                     buffer.push_back(prey2.bodyCoords[bi]);
-                    if (insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove), toMove) == false || (*world)[prey2.bodyCoords[bi] + toMove] != 0.0) {
-                        if (belongsToSelf(prey2.bodyCoords[bi] + toMove, &prey2.bodyCoords) == false) {
-                            occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
-                            dontMove = true;
-                            break;
+                    if (insideBounds(convertToXY(prey2.bodyCoords[bi] + toMove), toMove) == false) {                        
+                        dontMove = true;
+                    }
+                    else {
+                        if ((*world)[prey2.bodyCoords[bi] + toMove] != 0.0) {
+                            if (belongsToSelf(prey2.bodyCoords[bi] + toMove, &prey2.bodyCoords) == false) {
+                                dontMove = true;
+                            }
                         }
                     }
                 }
@@ -362,6 +383,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                         }
                     }
                 }
+                else {
+                    occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
+                }
             }
         }
         if (flag1 && flag2) {
@@ -374,12 +398,15 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             vector<int> buffer;
             for (int bi = 0; bi < predator.bodyCoords.size(); bi++) {
                 buffer.push_back(predator.bodyCoords[bi]);
-                if (insideBounds(convertToXY(predator.bodyCoords[bi] + predatorMove), predatorMove) == false || (*world)[predator.bodyCoords[bi] + predatorMove] != 0.0) {
-                    if (belongsToSelf(predator.bodyCoords[bi] + predatorMove, &predator.bodyCoords) == false) {
-                        occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
-                        dontMove = true;
-                        break;
-                    }
+                if (insideBounds(convertToXY(predator.bodyCoords[bi] + predatorMove), predatorMove) == false) {
+                    dontMove = true;
+                }
+                else {
+                    if ((*world)[predator.bodyCoords[bi] + predatorMove] != 0.0) {
+                        if (belongsToSelf(predator.bodyCoords[bi] + predatorMove, &predator.bodyCoords) == false) {
+                            dontMove = true;
+                        }
+                    }                
                 }
             }
             if (!dontMove) {
@@ -394,6 +421,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                         }
                     }
                 }
+            }
+            else {
+                occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
             }
             if (touchingPrey) {
                 (*fitnessValues)[worldNumber] -= 100 / (t + 1);
@@ -416,7 +446,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
 
 int main() {
     
-    //TODO: MELHORAR FUNÇÃO OUT OF BOUNDS PARA N FAZER TIPO 19->20!
+    //TODO: AS CELULAS PODEM IR PARA CIMA DE ELAS MESMAS!
     int ua = 100; //size of each unit-area side, in pixels (square this number to get unit-area in pixels).
     vector<vector<double>> worlds;
     vector<vector<int>> worldsMovementData(WORLDS);
@@ -427,11 +457,11 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    //generateInitialGeneticMemory(&worlds[0]);
+    generateInitialGeneticMemory(&worlds[0]);
     /*for (int w = 0; w < WORLDS; w++) {
         runWorld(&worlds[w], &fitnessScores, w, &worldNeuralWeights, &worldsMovementData);
     }*/
-    for (int g = 0; g < 20; g++) {
+    for (int g = 0; g < 100; g++) {
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
         thread second(runWorld, &worlds[1], &fitnessScores, 1, &worldNeuralWeights, &worldsMovementData);
         thread third(runWorld, &worlds[2], &fitnessScores, 2, &worldNeuralWeights, &worldsMovementData);
@@ -446,6 +476,7 @@ int main() {
                 maxFi = i;
             }
         }
+        //cout << fitnessScores[maxFi] << endl;
         vector<vector<vector<double>>> nextGenNet = worldNeuralWeights[maxFi];
         ofstream geneticData;
         ofstream geneticHistory;
@@ -494,6 +525,20 @@ int main() {
         movementHistory << endl;
         movementData.close();
         movementHistory.close();
+        for (int i = 0; i < worldsMovementData.size(); i++) {
+            worldsMovementData[i].clear();
+        }
+        for (int i = 0; i < worlds.size(); i++) {
+            for (int s = 0; s < worlds[i].size(); s++) {
+                worlds[i][s] = 0.0;
+            }
+        }
+        for (int i = 0; i < worldNeuralWeights.size(); i++) {
+            worldNeuralWeights[i].clear();
+        }
+        for (int i = 0; i < fitnessScores.size(); i++) {
+            fitnessScores[i] = 0;
+        }
     }
     displayBestOfGen(100);
     return 0;
