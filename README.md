@@ -10,3 +10,6 @@ the moves each generations fittest neural net performed. The latest move is read
 did, in an SFML graphical window.
 
 Requires SFML, Windows, and a 64 bits pc.
+
+Video that showcases final result after a little under 400 generations:
+https://www.youtube.com/watch?v=uJpKp2qCFgE&feature=youtu.be
