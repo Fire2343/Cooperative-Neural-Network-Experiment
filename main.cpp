@@ -14,7 +14,7 @@
 const int DWW = 1000; // display window width, in pixels.
 const int DWH = 1000; //display window height, in pixels.
 const int WSL = 10; //size of both world dimensions, in units-area.
-const int WORLDS = 3; //each thread runs a world
+const int WORLDS = 4; //each thread runs a world
 
 
 using namespace sf;
@@ -122,7 +122,7 @@ void mutateNeuralNet(vector<vector<vector<double>>> *weights) {
     mt19937_64 generator(WorldSeed);
     uniform_int_distribution<int> distribution(0, 100);
     uniform_real_distribution<double> vdistribution(-1.00, 1.00);
-    uniform_real_distribution<double> nlvdistribution(-2.00, 2.00);
+    uniform_real_distribution<double> nlvdistribution(-1.00, 1.00);
     for (int l = 0; l < (*weights).size(); l++) { //percorrer camadas
         for (int n = 0; n < (*weights)[l].size(); n++) { //percorrer neuronios da camada
             if (distribution(generator) == 1 && l < (*weights).size() - 1 && (*weights)[l].size() <= 300) { //oportunidade de mutação para criação de novos neurónios
@@ -212,18 +212,18 @@ bool belongsToSelf(int c, vector<int>* bodyParts) {
 
 void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber, vector<vector<vector<vector<double>>>> *worldNeuralWeights, vector<vector<int>> *worldsMovementData) {
     vector<int> predatorBodyCoords;
-    predatorBodyCoords.push_back(34);
-    predatorBodyCoords.push_back(35);
-    predatorBodyCoords.push_back(44);
-    predatorBodyCoords.push_back(45);
-    (*world)[34] = 1.0;
-    (*world)[35] = 1.0;
-    (*worldsMovementData)[worldNumber].push_back(34);
-    (*worldsMovementData)[worldNumber].push_back(35);
-    (*world)[44] = 1.0;
-    (*world)[45] = 1.0;
-    (*worldsMovementData)[worldNumber].push_back(44);
-    (*worldsMovementData)[worldNumber].push_back(45);
+    predatorBodyCoords.push_back(31);
+    predatorBodyCoords.push_back(32);
+    predatorBodyCoords.push_back(41);
+    predatorBodyCoords.push_back(42);
+    (*world)[31] = 1.0;
+    (*world)[32] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(31);
+    (*worldsMovementData)[worldNumber].push_back(32);
+    (*world)[41] = 1.0;
+    (*world)[42] = 1.0;
+    (*worldsMovementData)[worldNumber].push_back(41);
+    (*worldsMovementData)[worldNumber].push_back(42);
     Predator predator(predatorBodyCoords);
     vector<Prey> preys;
     vector<int> preyBodyCoords;
@@ -294,6 +294,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
     bool endGame = false;
     vector<int> occupiedCoords;
     vector <int> unnocupiedCoords;
+    int moves = 0;
     for (int t = 0; t < 20; t++) {
         flag1 = false;
         flag2 = false;
@@ -349,6 +350,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     }
                 }
                 if (!dontMove) {
+                    if (toMove != 0) {
+                        moves++;
+                    }
                     for (int bi = 0; bi < prey1.bodyCoords.size(); bi++) {
                         unnocupiedCoords.push_back(prey1.bodyCoords[bi]);
                         prey1.bodyCoords[bi] += toMove;
@@ -378,6 +382,9 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                     }
                 }
                 if (!dontMove) {
+                    if (toMove != 0) {
+                        moves++;
+                    }
                     for (int bi = 0; bi < prey2.bodyCoords.size(); bi++) {
                         unnocupiedCoords.push_back(prey2.bodyCoords[bi]);
                         prey2.bodyCoords[bi] += toMove;
@@ -393,7 +400,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
             }
         }
         if (flag1 && flag2) {
-            (*fitnessValues)[worldNumber] += 1000 / (t + 1);
+            (*fitnessValues)[worldNumber] += 10000 / ((t + 1) + moves);
             endGame = true;
         }
         if (!endGame) {
@@ -430,7 +437,7 @@ void runWorld(vector<double> *world, vector<int> *fitnessValues, int worldNumber
                 occupiedCoords.insert(occupiedCoords.end(), buffer.begin(), buffer.end());
             }
             if (touchingPrey) {
-                (*fitnessValues)[worldNumber] -= 100 / (t + 1);
+                (*fitnessValues)[worldNumber] += -100 / (t + 1) + moves;
                 endGame = true;
             }
         }
@@ -461,15 +468,17 @@ int main() {
         worlds.push_back(world);
         fitnessScores.push_back(0);
     }
-    generateInitialGeneticMemory(&worlds[0]);
+    //generateInitialGeneticMemory(&worlds[0]);
     for (int g = 0; g < 100; g++) {
         cout << g << endl;
         thread first(runWorld, &worlds[0], &fitnessScores, 0, &worldNeuralWeights, &worldsMovementData);
         thread second(runWorld, &worlds[1], &fitnessScores, 1, &worldNeuralWeights, &worldsMovementData);
         thread third(runWorld, &worlds[2], &fitnessScores, 2, &worldNeuralWeights, &worldsMovementData);
+        thread fourth(runWorld, &worlds[3], &fitnessScores, 3, &worldNeuralWeights, &worldsMovementData);
         first.join();
         second.join();
         third.join();
+        fourth.join();
         int maxF = -10000;
         int maxFi = 0;
         for (int i = 0; i < fitnessScores.size(); i++) {
