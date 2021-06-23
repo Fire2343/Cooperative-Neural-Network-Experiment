@@ -7,7 +7,7 @@ the predator creature. They can do this by both being within "touching distance"
 of the predator creature, at the same time. Included are the source files, plus a bunch of text files that store the last fittest neural net, past
 fittest neural nets, and a movement file txt that stores the moves the last fittest neural net performed, and a move history that stores
 the moves the fittest neural net in each generation performed. The moves performed by the latest generation are read in order to display what it
-did, in an SFML graphical window, that refreshes every two seconds so analyzing the moves is easier.
+did, in an SFML graphical window, that refreshes every two seconds so as to provide time to analyze the moves.
 
 Link that shows the result of running the program with the fittest neural net loaded:
 https://www.youtube.com/watch?v=54NwIbQYdqg&feature=youtu.be
